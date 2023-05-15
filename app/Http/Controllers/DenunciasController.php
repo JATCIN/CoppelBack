@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Denuncias;
+use App\Models\Usuarios;
 use Illuminate\Http\Request;
 
 class DenunciasController extends Controller
@@ -29,24 +30,70 @@ class DenunciasController extends Controller
      */
     public function store(Request $request)
     {
+        $empresas_id = $request->input('empresas_id');
+        $paises_id = $request->input('paises_id');
+        $estados_id = $request->input('estados_id');
+        $nombre = $request->input('nombre');
+        $telefono = $request->input('telefono');
+        $correo = $request->input('correo');
+        $detalle = $request->input('detalle');
+        $fecha = $request->input('fecha');
+        $contraseña = $request->input('contraseña');
+        $numero_centro = $request->input('numero_centro');
+
+        //paso 1 guardar datos en la tabla usuarios
+        $usuarios = new Usuarios();
+        if ($nombre && $telefono && $correo) {
+            $usuarios->nombre = $nombre;
+            $usuarios->telefono = $telefono;
+            $usuarios->correo = $correo;
+        } else {
+            // Datos de usuario anónimo
+            $usuarios->nombre = 'Anónimo';
+            $usuarios->telefono ='Anónimo';
+            $usuarios->correo = 'Anónimo';
+        }
+        
+        $usuarios->save();
+        
+        $usuarios_id = $usuarios->id;
+
+        //paso 2 guardar datos en la tabla denuncias
         $denuncias = new Denuncias;
-        $denuncias->empresas_id = $request->empresas_id;
-        $denuncias->paises_id = $request->paises_id;
-        $denuncias->estados_id = $request->estados_id;
-        $denuncias->usuarios_id = $request->usuarios_id;
-        $denuncias->detalle = $request->detalle;
-        $denuncias->fecha = $request->fecha;
-        $denuncias->contraseña = $request->contraseña;
-        $denuncias->folio = $request->folio;
-        $denuncias->numero_centro = $request->numero_centro;
-        $denuncias->comentarios = $request->comentarios;
-        $denuncias->estatus = $request->estatus;
+        $denuncias->empresas_id = $empresas_id;
+        $denuncias->paises_id = $paises_id;
+        $denuncias->estados_id = $estados_id;
+        $denuncias->usuarios_id = $usuarios_id;
+        $denuncias->detalle = $detalle;
+        $denuncias->fecha = $fecha;
+        $denuncias->contraseña = $contraseña;
+        $denuncias->folio = $this->generarFolioAutomatico();
+        $denuncias->numero_centro = $numero_centro;
         $denuncias->save();
-         $data =[
-            'message' => 'denuncia creada exitosamente',
-            'denuncias' =>$denuncias
-        ];
-        return response()->json($data);
+         
+        if ($denuncias->save()) {
+            // Obtener el ID de la denuncia creada
+            $denuncias_id = $denuncias->id;
+    
+            // Obtener la denuncia completa con todos sus datos
+            $denuncias = Denuncias::findOrFail($denuncias_id);
+    
+            $data = [
+                'message' => 'Denuncia creada exitosamente',
+                'denuncias' => $denuncias
+            ];
+    
+            return response()->json($data);
+        } else {
+            return response()->json(['message' => 'Error al crear la denuncia'], 500);
+        }
+    }
+
+    private function generarFolioAutomatico()
+    {
+        $folio = mt_rand(10000, 99999);
+
+    return $folio;
     }
 
     /**
@@ -70,20 +117,12 @@ class DenunciasController extends Controller
      */
     public function update(Request $request, Denuncias $denuncias)
     {
-        $denuncias->empresas_id = $request->empresas_id;
-        $denuncias->paises_id = $request->paises_id;
-        $denuncias->estados_id = $request->estados_id;
-        $denuncias->usuarios_id = $request->usuarios_id;
-        $denuncias->detalle = $request->detalle;
-        $denuncias->fecha = $request->fecha;
-        $denuncias->contraseña = $request->contraseña;
-        $denuncias->folio = $request->folio;
-        $denuncias->numero_centro = $request->numero_centro;
+       
         $denuncias->comentarios = $request->comentarios;
         $denuncias->estatus = $request->estatus;
         $denuncias->save();
          $data =[
-            'message' => 'denuncia creada exitosamente',
+            'message' => 'denuncia actualizada exitosamente',
             'denuncias' =>$denuncias
         ];
         return response()->json($data);
