@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Denuncias;
 use App\Models\Usuarios;
+use App\Models\Empresas;
 use Illuminate\Http\Request;
 
 class DenunciasController extends Controller
@@ -11,11 +12,19 @@ class DenunciasController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
-    {
-        $denuncias=Denuncias::all();
-        return response()->json($denuncias);
+   public function index()
+{
+    $denuncias = Denuncias::all();
+
+    foreach ($denuncias as $denuncia) {
+        $empresa = Empresas::find($denuncia->empresas_id);
+        $usuario = Usuarios::find($denuncia->usuarios_id);
+        $denuncia->empresa = $empresa;
+        $denuncia->usuario = $usuario;
     }
+
+    return response()->json($denuncias);
+}
 
     /**
      * Show the form for creating a new resource.

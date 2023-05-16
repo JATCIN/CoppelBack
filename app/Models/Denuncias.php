@@ -18,4 +18,8 @@ class Denuncias extends Model
     {
         return $this->belongsTo(Paises::class);
     }
+    public function usuarios()
+    {
+        return $this->belongsTo(Usuarios::class);
+    }
 }
